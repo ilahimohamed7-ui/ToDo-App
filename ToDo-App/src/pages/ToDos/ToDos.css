@@ -1,0 +1,166 @@
+/* =========================================
+   Allgemeines Layout
+========================================= */
+.todos-container {
+  max-width: 1200px;     /* maximale Breite */
+  margin: 0 auto;        /* zentriert den Inhalt */
+  padding: 40px 40px;    /* etwas Abstand zum Rand */
+  background-color: #e4ecdf;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  width: 100%; 
+}
+
+
+/* =========================================
+   Header-Bereich
+========================================= */
+.todos-header {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}   
+
+
+.todos-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 40px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+
+.back-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0.7;
+}
+
+.back-title {
+  font-size: 18px;
+  margin: 0;
+}
+
+.header-icons {
+  display: flex;
+  gap: 20px; /* Abstand zwischen Glocke und Profil */
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.header-divider {
+  border: none;
+  border-top: 3px solid #000;
+  width: 100%;       /* passt sich Container an */
+  margin: 0;
+
+}
+
+/* Zweite Zeile (Titel + Share-Icon) */
+.todos-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  margin-left: 100px;
+}
+
+.todos-titlebar h1 {
+  margin: 0;
+}
+
+.icon-btn {
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  opacity: 0.7;
+}
+
+/* =========================================
+   Eingabebereich
+========================================= */
+.todos-input-section {
+  display: flex;
+  gap: 10px;
+  max-width: 600px;
+  margin: 20px auto 0 auto;  /* zentriert unter der Überschrift */
+}
+
+.todos-input {
+  flex: 2;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #aaa;
+  font-size: 16px;
+}
+
+.todos-time-input {
+  flex: 1;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #aaa;
+}
+
+.todos-add-btn {
+  padding: 10px 20px;
+  background-color: #3777ff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* =========================================
+   Aufgabenliste
+========================================= */
+.todos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 600px;
+  margin: 50px auto 0 auto;  /* zentriert unter dem Eingabebereich */
+}
+
+.todo-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: white;
+  padding: 12px 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.todo-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.todo-checkbox {
+  width: 18px;
+  height: 18px;
+}
+
+.todo-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.todo-time {
+  font-size: 14px;
+  color: #555;
+}
