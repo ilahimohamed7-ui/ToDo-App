@@ -1,0 +1,81 @@
+.profile-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;        /* zentriert den Inhalt horizontal */
+  gap: 50px; /* verteilt Inhalt oben/unten */
+  height: 100vh;
+  width: 100%;
+  padding: 40px 0;
+  background-color: #e4ecdf;  /* gleich wie bei den anderen Seiten */
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.profile-icon {
+  width: 50px;
+  height: 50px;
+}
+
+.profile-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 400px;  /* Eingabefelder nicht zu breit */
+}
+
+.profile-section label {
+  font-weight: bold;
+}
+
+.profile-section input {
+  padding: 10px;
+  border: 1px solid #aaa;
+  border-radius: 5px;
+  font-size: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.profile-section button {
+  align-self: flex-start;
+  padding: 8px 15px;
+  background-color: #3777ff;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* Abmeldebereich */
+.profile-footer {
+  display: flex;
+  justify-content: center;  /* Button mittig */
+  width: 100%;
+  padding-bottom: 30px;
+}
+
+.logout-btn {
+  background-color: #e53935;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background-color: #c62828;
+}
+
+.back-section {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  cursor: pointer;
+}

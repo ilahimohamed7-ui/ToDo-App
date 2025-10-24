@@ -1,22 +1,31 @@
+import { useNavigate } from "react-router-dom";
 import "./ToDos.css";
 import shareIcon from "../../assets/share.png";
 import deleteIcon from "../../assets/delete.png";
 import backIcon from "../../assets/back.png";
+import profileIcon from "../../assets/profile.png";
 
 export default function ToDos() {
+  const navigate = useNavigate();
+
   return (
     <div>
       <header className="todos-header">
         {/* Obere Leiste */}
         <div className="todos-topbar">
-          <div className="back-section">
+          <div className="back-section" onClick={() => navigate("/home")}>
             <img src={backIcon} alt="Zurück" className="icon-btn" />
             <h2 className="back-title">Zurück zu ToDo-Listen</h2>
           </div>
 
           <div className="header-icons">
             <span>🔔</span>
-            <span>👤</span>
+            <img
+              src={profileIcon}
+              alt="Profil"
+              className="icon-btn"
+              onClick={() => navigate("/profile")}
+            />
           </div>
         </div>
 
