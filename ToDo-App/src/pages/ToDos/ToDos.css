@@ -55,6 +55,7 @@
   gap: 20px; /* Abstand zwischen Glocke und Profil */
   font-size: 24px;
   cursor: pointer;
+  margin-left: auto;
 }
 
 .header-divider {

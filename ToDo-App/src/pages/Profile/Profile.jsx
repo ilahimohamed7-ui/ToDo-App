@@ -42,7 +42,9 @@ export default function Profile() {
 
       {/* Abmelden */}
       <div className="profile-footer">
-        <button className="logout-btn">Abmelden</button>
+        <button className="logout-btn" onClick={() => navigate("/")}>
+          Abmelden
+        </button>
       </div>
     </div>
   );
