@@ -5,6 +5,7 @@ import shareIcon from "../../assets/share.png";
 import deleteIcon from "../../assets/delete.png";
 import backIcon from "../../assets/back.png";
 import profileIcon from "../../assets/profile.png";
+import Popup from "../Popup/Popup.jsx";
 
 export default function ToDos() {
   const navigate = useNavigate();
@@ -16,6 +17,8 @@ export default function ToDos() {
   const [newTodoText, setNewTodoText] = useState("");
   const [projectName, setProjectName] = useState("");
   const [newTodoTime, setNewTodoTime] = useState("");
+  const [showPopup, setShowPopup] = useState(false);
+  const [shareEmail, setShareEmail] = useState("");
 
   //useEffect wird ausgeführ sobald die Seite geladen wird
 
@@ -87,6 +90,13 @@ export default function ToDos() {
     localStorage.setItem("todos", JSON.stringify(storedTodos));
   };
 
+  const handleSend = () => {
+    // Hier können Sie die Logik zum Teilen der ToDo-Liste per E-Mail implementieren
+    alert(`ToDo-Liste wirde geteilt mit :  ${shareEmail} `);
+    setShowPopup(false);
+    setShareEmail("");
+  };
+
   return (
     <div>
       <header className="todos-header">
@@ -113,7 +123,22 @@ export default function ToDos() {
         {/* Titelzeile */}
         <div className="todos-titlebar">
           <h1>ToDos für: {projectName}</h1>
-          <img src={shareIcon} alt="Teilen" className="icon-btn" />
+          <img
+            src={shareIcon}
+            alt="Teilen"
+            className="icon-btn"
+            onClick={() => setShowPopup(true)}
+          />
+          {showPopup && (
+            <Popup
+              title="Teilen Sie Ihre ToDo-Liste"
+              message="Geben Sie die E-Mail-Adresse ein, mit der Sie die ToDo-Liste teilen möchten:"
+              inputValue={shareEmail}
+              onInputChange={setShareEmail}
+              onClose={() => setShowPopup(false)}
+              onSend={handleSend}
+            />
+          )}
         </div>
       </header>
 

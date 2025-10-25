@@ -4,11 +4,14 @@ import { useEffect, useState } from "react";
 import shareIcon from "../../assets/share.png";
 import deleteIcon from "../../assets/delete.png";
 import profileIcon from "../../assets/profile.png";
+import Popup from "../Popup/Popup";
 
 export default function Home() {
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [newProjectName, setNewProjectName] = useState("");
+  const [showPopup, setShowPopup] = useState(false);
+  const [shareEmail, setShareEmail] = useState("");
 
   useEffect(() => {
     const loggedIn = localStorage.getItem("loggedIn");
@@ -49,6 +52,13 @@ export default function Home() {
   const getTodoCount = (projectId) => {
     const storedTodos = JSON.parse(localStorage.getItem("todos")) || {};
     return storedTodos[projectId]?.length || 0;
+  };
+
+  const handleSend = () => {
+    // Hier können Sie die Logik zum Teilen der ToDo-Liste per E-Mail implementieren
+    alert(`ToDo-Liste wirde geteilt mit :  ${shareEmail} `);
+    setShowPopup(false);
+    setShareEmail("");
   };
 
   return (
@@ -110,7 +120,16 @@ export default function Home() {
                   </p>
                 </div>
                 <div className="todo-icons">
-                  <img src={shareIcon} alt="Teilen" className="icon-btn" />
+                  <img
+                    src={shareIcon}
+                    alt="Teilen"
+                    className="icon-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowPopup(true);
+                    }}
+                  />
+
                   <img
                     src={deleteIcon}
                     alt="Löschen"
@@ -124,6 +143,16 @@ export default function Home() {
               </div>
             </div>
           ))}
+
+          {showPopup && (
+            <Popup
+              title="Teilen Sie Ihre ToDo-Liste"
+              onClose={() => setShowPopup(false)}
+              onSend={handleSend}
+              value={shareEmail}
+              setValue={setShareEmail}
+            />
+          )}
         </div>
       </div>
     </div>
