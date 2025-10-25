@@ -9,19 +9,25 @@ export default function Login() {
   const navigate = useNavigate();
 
   const handleLogin = () => {
-    const storedUser = JSON.parse(localStorage.getItem("user"));
+    // Alle User laden
+    const allUsers = JSON.parse(localStorage.getItem("users")) || [];
+
+    // Benutzer suchen
+    const storedUser = allUsers.find((u) => u.email === email);
 
     if (!storedUser) {
-      alert("❌ Kein Benutzer gefunden! Bitte registrieren.");
+      alert("❌ Kein Benutzer mit dieser E-Mail gefunden! Bitte registrieren.");
       return;
     }
 
-    if (email === storedUser.email && password === storedUser.password) {
+    // Passwort prüfen
+    if (password === storedUser.password) {
       localStorage.setItem("loggedIn", "true");
-      alert("Login erfolgreich!");
+      localStorage.setItem("loggedInUser", email);
+      alert("✅ Login erfolgreich!");
       navigate("/home");
     } else {
-      alert("Ungültige Anmeldedaten. Bitte versuchen Sie es erneut.");
+      alert("⚠️ Falsches Passwort. Bitte erneut versuchen.");
     }
   };
 

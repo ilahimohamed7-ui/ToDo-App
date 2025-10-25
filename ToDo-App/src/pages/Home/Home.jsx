@@ -8,57 +8,113 @@ import Popup from "../Popup/Popup";
 
 export default function Home() {
   const navigate = useNavigate();
+
   const [projects, setProjects] = useState([]);
   const [newProjectName, setNewProjectName] = useState("");
   const [showPopup, setShowPopup] = useState(false);
   const [shareEmail, setShareEmail] = useState("");
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
 
+  // ✅ Beim Laden: Benutzer prüfen & Projekte laden
   useEffect(() => {
     const loggedIn = localStorage.getItem("loggedIn");
-    if (!loggedIn) {
+    const userEmail = localStorage.getItem("loggedInUser");
+
+    if (!loggedIn || !userEmail) {
       navigate("/");
+      return;
     }
 
-    const storedProjects = JSON.parse(localStorage.getItem("projects")) || [];
+    const storedProjects =
+      JSON.parse(localStorage.getItem(`projects_${userEmail}`)) || [];
     setProjects(storedProjects);
   }, [navigate]);
 
+  // ➕ Projekt hinzufügen
   const handleAddProject = () => {
     if (newProjectName.trim() === "") {
       alert("Bitte geben Sie einen Projektnamen ein.");
       return;
     }
 
+    const userEmail = localStorage.getItem("loggedInUser");
+    if (!userEmail) {
+      alert("Fehler: Kein Benutzer gefunden. Bitte neu einloggen.");
+      navigate("/");
+      return;
+    }
+
+    const storedProjects =
+      JSON.parse(localStorage.getItem(`projects_${userEmail}`)) || [];
+
     const newProject = {
       id: Date.now(),
       name: newProjectName,
     };
-    const updatedProjects = [...projects, newProject];
+
+    const updatedProjects = [...storedProjects, newProject];
     setProjects(updatedProjects);
-    localStorage.setItem("projects", JSON.stringify(updatedProjects));
+    localStorage.setItem(
+      `projects_${userEmail}`,
+      JSON.stringify(updatedProjects)
+    );
     setNewProjectName("");
   };
 
+  // 🗑 Projekt löschen
   const handleDeleteProject = (id) => {
-    const updated = projects.filter((p) => p.id !== id);
+    const userEmail = localStorage.getItem("loggedInUser");
+    if (!userEmail) return;
+
+    const storedProjects =
+      JSON.parse(localStorage.getItem(`projects_${userEmail}`)) || [];
+    const updated = storedProjects.filter((p) => p.id !== id);
     setProjects(updated);
-    localStorage.setItem("projects", JSON.stringify(updated));
+    localStorage.setItem(`projects_${userEmail}`, JSON.stringify(updated));
   };
 
+  // 📂 Todos öffnen
   const handleOpenTodos = (id) => {
     navigate(`/todos?id=${id}`);
   };
 
+  // 📊 Anzahl Aufgaben anzeigen
   const getTodoCount = (projectId) => {
     const storedTodos = JSON.parse(localStorage.getItem("todos")) || {};
     return storedTodos[projectId]?.length || 0;
   };
 
+  // 📤 Projekt teilen
   const handleSend = () => {
-    // Hier können Sie die Logik zum Teilen der ToDo-Liste per E-Mail implementieren
-    alert(`ToDo-Liste wirde geteilt mit :  ${shareEmail} `);
-    setShowPopup(false);
+    const senderEmail = localStorage.getItem("loggedInUser");
+    if (!shareEmail || shareEmail === senderEmail) {
+      alert("❌ Ungültige Empfänger-Adresse");
+      return;
+    }
+
+    const projectToShare = projects.find((p) => p.id === selectedProjectId);
+    if (!projectToShare) return;
+
+    const recipientProjects =
+      JSON.parse(localStorage.getItem(`projects_${shareEmail}`)) || [];
+
+    const alreadyExists = recipientProjects.some(
+      (p) => p.id === projectToShare.id
+    );
+
+    if (!alreadyExists) {
+      recipientProjects.push(projectToShare);
+      localStorage.setItem(
+        `projects_${shareEmail}`,
+        JSON.stringify(recipientProjects)
+      );
+      alert(`✅ Projekt wurde mit ${shareEmail} geteilt`);
+    } else {
+      alert("⚠️ Dieses Projekt wurde bereits geteilt.");
+    }
+
     setShareEmail("");
+    setShowPopup(false);
   };
 
   return (
@@ -66,7 +122,6 @@ export default function Home() {
       {/* Header */}
       <header className="home-header">
         <h1 className="home-title">Simple ToDo</h1>
-
         <div className="header-icons">
           <span>🔍</span>
           <span>🔔</span>
@@ -81,7 +136,7 @@ export default function Home() {
 
       {/* Inhalt */}
       <div className="home-content">
-        {/* Neue ToDo erstellen */}
+        {/* Projekt erstellen */}
         <div className="todo-create">
           <h3>Neue ToDo erstellen:</h3>
           <input
@@ -91,13 +146,12 @@ export default function Home() {
             value={newProjectName}
             onChange={(e) => setNewProjectName(e.target.value)}
           />
-
           <button className="add-button" onClick={handleAddProject}>
             Erstellen
           </button>
         </div>
 
-        {/* ToDo Listen */}
+        {/* Projektliste */}
         <div className="todo-lists">
           <h3>ToDo-Listen:</h3>
 
@@ -120,20 +174,23 @@ export default function Home() {
                   </p>
                 </div>
                 <div className="todo-icons">
+                  {/* Teilen */}
                   <img
                     src={shareIcon}
                     alt="Teilen"
                     className="icon-btn"
                     onClick={(e) => {
                       e.stopPropagation();
+                      setSelectedProjectId(project.id);
                       setShowPopup(true);
                     }}
                   />
 
+                  {/* Löschen */}
                   <img
                     src={deleteIcon}
                     alt="Löschen"
-                    className="icon-btn "
+                    className="icon-btn"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDeleteProject(project.id);
@@ -144,6 +201,7 @@ export default function Home() {
             </div>
           ))}
 
+          {/* Popup */}
           {showPopup && (
             <Popup
               title="Teilen Sie Ihre ToDo-Liste"

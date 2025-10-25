@@ -11,40 +11,48 @@ export default function ToDos() {
   const navigate = useNavigate();
   const location = useLocation();
   const params = new URLSearchParams(location.search);
-  const projectId = params.get("id"); // z. B. ?id=12345
+  const projectId = params.get("id");
 
   const [todos, setTodos] = useState([]);
   const [newTodoText, setNewTodoText] = useState("");
-  const [projectName, setProjectName] = useState("");
   const [newTodoTime, setNewTodoTime] = useState("");
+  const [projectName, setProjectName] = useState("");
   const [showPopup, setShowPopup] = useState(false);
   const [shareEmail, setShareEmail] = useState("");
 
-  //useEffect wird ausgeführ sobald die Seite geladen wird
-
+  // 📥 Projekte & Todos beim Laden holen
   useEffect(() => {
-    // Projekte aus dem Speicher holen
-    const storedProjects = JSON.parse(localStorage.getItem("projects")) || [];
+    const userEmail = localStorage.getItem("loggedInUser");
+    if (!userEmail) {
+      navigate("/");
+      return;
+    }
+
+    // Projekt laden
+    const storedProjects =
+      JSON.parse(localStorage.getItem(`projects_${userEmail}`)) || [];
     const currentProject = storedProjects.find(
       (p) => p.id.toString() === projectId
     );
 
     if (currentProject) {
-      // Projektnamen setzen
       setProjectName(currentProject.name);
     } else {
-      // Wenn kein Projekt mit der ID gefunden wird → zurück zur Startseite
       navigate("/home");
       return;
     }
 
-    // Todos für dieses Projekt laden
-    const storedTodos = JSON.parse(localStorage.getItem("todos")) || {};
+    // Todos laden
+    const storedTodos =
+      JSON.parse(localStorage.getItem(`todos_${userEmail}`)) || {};
     setTodos(storedTodos[projectId] || []);
-  }, [projectId, navigate]); // <- beide Dependencies angegeben ✅
+  }, [projectId, navigate]);
 
   // ➕ Aufgabe hinzufügen
   const handleAddTodo = () => {
+    const userEmail = localStorage.getItem("loggedInUser");
+    if (!userEmail) return;
+
     if (newTodoText.trim() === "") {
       alert("Bitte geben Sie eine Aufgabe ein.");
       return;
@@ -54,16 +62,16 @@ export default function ToDos() {
       id: Date.now(),
       name: newTodoText,
       completed: false,
-      time: newTodoTime,
+      time: newTodoTime || null,
     };
 
     const updatedTodos = [...todos, newTask];
     setTodos(updatedTodos);
 
-    // im LocalStorage speichern
-    const storedTodos = JSON.parse(localStorage.getItem("todos")) || {};
+    const storedTodos =
+      JSON.parse(localStorage.getItem(`todos_${userEmail}`)) || {};
     storedTodos[projectId] = updatedTodos;
-    localStorage.setItem("todos", JSON.stringify(storedTodos));
+    localStorage.setItem(`todos_${userEmail}`, JSON.stringify(storedTodos));
 
     setNewTodoText("");
     setNewTodoTime("");
@@ -71,34 +79,44 @@ export default function ToDos() {
 
   // 🗑️ Aufgabe löschen
   const handleDeleteTodo = (id) => {
+    const userEmail = localStorage.getItem("loggedInUser");
+    if (!userEmail) return;
+
     const updated = todos.filter((t) => t.id !== id);
     setTodos(updated);
 
-    const storedTodos = JSON.parse(localStorage.getItem("todos")) || {};
+    const storedTodos =
+      JSON.parse(localStorage.getItem(`todos_${userEmail}`)) || {};
     storedTodos[projectId] = updated;
-    localStorage.setItem("todos", JSON.stringify(storedTodos));
+    localStorage.setItem(`todos_${userEmail}`, JSON.stringify(storedTodos));
   };
 
-  const handleToggeleCheckbox = (id) => {
+  // ☑ Checkbox toggeln
+  const handleToggleCheckbox = (id) => {
+    const userEmail = localStorage.getItem("loggedInUser");
+    if (!userEmail) return;
+
     const updated = todos.map((t) =>
       t.id === id ? { ...t, completed: !t.completed } : t
     );
     setTodos(updated);
 
-    const storedTodos = JSON.parse(localStorage.getItem("todos")) || {};
+    const storedTodos =
+      JSON.parse(localStorage.getItem(`todos_${userEmail}`)) || {};
     storedTodos[projectId] = updated;
-    localStorage.setItem("todos", JSON.stringify(storedTodos));
+    localStorage.setItem(`todos_${userEmail}`, JSON.stringify(storedTodos));
   };
 
+  // 📤 Teilen
   const handleSend = () => {
-    // Hier können Sie die Logik zum Teilen der ToDo-Liste per E-Mail implementieren
-    alert(`ToDo-Liste wirde geteilt mit :  ${shareEmail} `);
+    alert(`ToDo-Liste wurde geteilt mit: ${shareEmail}`);
     setShowPopup(false);
     setShareEmail("");
   };
 
   return (
     <div>
+      {/* Header */}
       <header className="todos-header">
         {/* Obere Leiste */}
         <div className="todos-topbar">
@@ -127,16 +145,18 @@ export default function ToDos() {
             src={shareIcon}
             alt="Teilen"
             className="icon-btn"
-            onClick={() => setShowPopup(true)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowPopup(true);
+            }}
           />
           {showPopup && (
             <Popup
               title="Teilen Sie Ihre ToDo-Liste"
-              message="Geben Sie die E-Mail-Adresse ein, mit der Sie die ToDo-Liste teilen möchten:"
-              inputValue={shareEmail}
-              onInputChange={setShareEmail}
               onClose={() => setShowPopup(false)}
               onSend={handleSend}
+              value={shareEmail}
+              setValue={setShareEmail}
             />
           )}
         </div>
@@ -173,7 +193,7 @@ export default function ToDos() {
                 type="checkbox"
                 className="todo-checkbox"
                 checked={todo.completed}
-                onChange={() => handleToggeleCheckbox(todo.id)}
+                onChange={() => handleToggleCheckbox(todo.id)}
               />
               <span>{todo.name}</span>
             </div>
