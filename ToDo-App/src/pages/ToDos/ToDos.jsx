@@ -15,8 +15,10 @@ export default function ToDos() {
   const [todos, setTodos] = useState([]);
   const [newTodoText, setNewTodoText] = useState("");
   const [projectName, setProjectName] = useState("");
+  const [newTodoTime, setNewTodoTime] = useState("");
 
-  // ✅ useEffect wird ausgeführt, sobald die Seite geladen wird
+  //useEffect wird ausgeführ sobald die Seite geladen wird
+
   useEffect(() => {
     // Projekte aus dem Speicher holen
     const storedProjects = JSON.parse(localStorage.getItem("projects")) || [];
@@ -48,6 +50,8 @@ export default function ToDos() {
     const newTask = {
       id: Date.now(),
       name: newTodoText,
+      completed: false,
+      time: newTodoTime,
     };
 
     const updatedTodos = [...todos, newTask];
@@ -59,6 +63,7 @@ export default function ToDos() {
     localStorage.setItem("todos", JSON.stringify(storedTodos));
 
     setNewTodoText("");
+    setNewTodoTime("");
   };
 
   // 🗑️ Aufgabe löschen
@@ -122,6 +127,13 @@ export default function ToDos() {
           onChange={(e) => setNewTodoText(e.target.value)}
         />
 
+        <input
+          type="time"
+          className="todos-time-input"
+          value={newTodoTime}
+          onChange={(e) => setNewTodoTime(e.target.value)}
+        />
+
         <button className="todos-add-btn" onClick={handleAddTodo}>
           Hinzufügen
         </button>
@@ -141,6 +153,7 @@ export default function ToDos() {
               <span>{todo.name}</span>
             </div>
             <div className="todo-right">
+              {todo.time && <span className="todo-time">{todo.time}</span>}
               <img
                 src={deleteIcon}
                 alt="Löschen"
