@@ -20,7 +20,7 @@ export default function ToDos() {
   const [showPopup, setShowPopup] = useState(false);
   const [shareEmail, setShareEmail] = useState("");
 
-  // 📥 Projekte & Todos beim Laden holen
+  //  Projekte  Todos beim Laden holen
   useEffect(() => {
     const userEmail = localStorage.getItem("loggedInUser");
     if (!userEmail) {
@@ -48,7 +48,7 @@ export default function ToDos() {
     setTodos(storedTodos[projectId] || []);
   }, [projectId, navigate]);
 
-  // ➕ Aufgabe hinzufügen
+  // Aufgabe hinzufügen
   const handleAddTodo = () => {
     const userEmail = localStorage.getItem("loggedInUser");
     if (!userEmail) return;
@@ -77,7 +77,7 @@ export default function ToDos() {
     setNewTodoTime("");
   };
 
-  // 🗑️ Aufgabe löschen
+  //  Aufgabe löschen
   const handleDeleteTodo = (id) => {
     const userEmail = localStorage.getItem("loggedInUser");
     if (!userEmail) return;
@@ -91,7 +91,7 @@ export default function ToDos() {
     localStorage.setItem(`todos_${userEmail}`, JSON.stringify(storedTodos));
   };
 
-  // ☑ Checkbox toggeln
+  //  Checkbox toggeln
   const handleToggleCheckbox = (id) => {
     const userEmail = localStorage.getItem("loggedInUser");
     if (!userEmail) return;
@@ -107,7 +107,7 @@ export default function ToDos() {
     localStorage.setItem(`todos_${userEmail}`, JSON.stringify(storedTodos));
   };
 
-  // 📤 Teilen
+  // Teilen
   const handleSend = () => {
     alert(`ToDo-Liste wurde geteilt mit: ${shareEmail}`);
     setShowPopup(false);

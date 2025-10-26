@@ -15,7 +15,7 @@ export default function Home() {
   const [shareEmail, setShareEmail] = useState("");
   const [selectedProjectId, setSelectedProjectId] = useState(null);
 
-  // ✅ Beim Laden: Benutzer prüfen & Projekte laden
+  // Beim Laden: Benutzer prüfen und Projekte laden
   useEffect(() => {
     const loggedIn = localStorage.getItem("loggedIn");
     const userEmail = localStorage.getItem("loggedInUser");
@@ -30,7 +30,7 @@ export default function Home() {
     setProjects(storedProjects);
   }, [navigate]);
 
-  // ➕ Projekt hinzufügen
+  //  Projekt hinzufügen
   const handleAddProject = () => {
     if (newProjectName.trim() === "") {
       alert("Bitte geben Sie einen Projektnamen ein.");
@@ -78,13 +78,16 @@ export default function Home() {
     navigate(`/todos?id=${id}`);
   };
 
-  // 📊 Anzahl Aufgaben anzeigen
+  //  Anzahl Aufgaben anzeigen
   const getTodoCount = (projectId) => {
-    const storedTodos = JSON.parse(localStorage.getItem("todos")) || {};
+    const userEmail = localStorage.getItem("loggedInUser");
+    if (!userEmail) return 0;
+    const storedTodos =
+      JSON.parse(localStorage.getItem(`todos_${userEmail}`)) || {};
     return storedTodos[projectId]?.length || 0;
   };
 
-  // 📤 Projekt teilen
+  //  Projekt teilen
   const handleSend = () => {
     const senderEmail = localStorage.getItem("loggedInUser");
     if (!shareEmail || shareEmail === senderEmail) {
@@ -111,6 +114,18 @@ export default function Home() {
       alert(`✅ Projekt wurde mit ${shareEmail} geteilt`);
     } else {
       alert("⚠️ Dieses Projekt wurde bereits geteilt.");
+    }
+
+    const senderTodos =
+      JSON.parse(localStorage.getItem(`todos_${senderEmail}`)) || {};
+    const recipientTodos =
+      JSON.parse(localStorage.getItem(`todos_${shareEmail}`)) || {};
+    if (senderTodos[selectedProjectId]) {
+      recipientTodos[selectedProjectId] = senderTodos[selectedProjectId];
+      localStorage.setItem(
+        `todos_${shareEmail}`,
+        JSON.stringify(recipientTodos)
+      );
     }
 
     setShareEmail("");
