@@ -19,6 +19,9 @@ export default function ToDos() {
   const [projectName, setProjectName] = useState("");
   const [showPopup, setShowPopup] = useState(false);
   const [shareEmail, setShareEmail] = useState("");
+  const [shownReminders, setShownReminders] = useState([]);
+  const [reminderTodos, setReminderTodos] = useState([]);
+  const [showReminderPopup, setShowReminderPopup] = useState(false);
 
   //  Projekte  Todos beim Laden holen
   useEffect(() => {
@@ -62,7 +65,7 @@ export default function ToDos() {
       id: Date.now(),
       name: newTodoText,
       completed: false,
-      time: newTodoTime || null,
+      dueDateTime: newTodoTime,
     };
 
     const updatedTodos = [...todos, newTask];
@@ -114,6 +117,18 @@ export default function ToDos() {
     setShareEmail("");
   };
 
+  useEffect(() => {
+    const now = new Date();
+    const reminders = todos.filter((todo) => {
+      if (!todo.dueDateTime) return false;
+      const todoDate = new Date(todo.dueDateTime);
+      const timeDiff = todoDate - now;
+      return timeDiff > 0 && timeDiff <= 15 * 60 * 1000;
+    });
+
+    setReminderTodos(reminders);
+  }, [todos]);
+
   return (
     <div>
       {/* Header */}
@@ -126,7 +141,18 @@ export default function ToDos() {
           </div>
 
           <div className="header-icons">
-            <span>🔔</span>
+            <span
+              className="bell-icon"
+              onClick={() => setShowReminderPopup(!showReminderPopup)}
+            >
+              🔔
+              {reminderTodos.length > 0 && (
+                <span className="notification-badge">
+                  {reminderTodos.length}
+                </span>
+              )}
+            </span>
+
             <img
               src={profileIcon}
               alt="Profil"
@@ -162,6 +188,37 @@ export default function ToDos() {
         </div>
       </header>
 
+      {showReminderPopup && (
+        <div className="reminder-popup">
+          <h3>Erinnerungen</h3>
+          {reminderTodos.length === 0 ? (
+            <p>Keine anstehenden Erinnerungen.</p>
+          ) : (
+            reminderTodos.map((todo) => (
+              <div
+                key={todo.id}
+                className="reminder-item"
+                onClick={() => {
+                  handleToggleCheckbox(todo.id);
+                  setShownReminders((prev) => [...prev, todo.id]);
+                }}
+              >
+                <span>{todo.name}</span>
+                {!shownReminders.includes(todo.id) && (
+                  <span className="reminder-time">
+                    Fällig um:{" "}
+                    {new Date(todo.dueDateTime).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
       {/* Eingabebereich */}
       <div className="todos-input-section">
         <input
@@ -173,7 +230,7 @@ export default function ToDos() {
         />
 
         <input
-          type="time"
+          type="datetime-local"
           className="todos-time-input"
           value={newTodoTime}
           onChange={(e) => setNewTodoTime(e.target.value)}
@@ -198,7 +255,14 @@ export default function ToDos() {
               <span>{todo.name}</span>
             </div>
             <div className="todo-right">
-              {todo.time && <span className="todo-time">{todo.time}</span>}
+              {todo.dueDateTime && (
+                <span className="todo-time">
+                  {new Date(todo.dueDateTime).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              )}
               <img
                 src={deleteIcon}
                 alt="Löschen"

@@ -165,3 +165,20 @@
   font-size: 14px;
   color: #555;
 }
+
+.reminder-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+  cursor: pointer;
+}
+
+.reminder-item:hover {
+  background: #f7f7f7;
+}
+
+.reminder-time {
+  font-size: 12px;
+  color: #777;
+}
