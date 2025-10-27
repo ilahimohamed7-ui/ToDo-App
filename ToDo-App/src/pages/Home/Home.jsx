@@ -5,6 +5,7 @@ import shareIcon from "../../assets/share.png";
 import deleteIcon from "../../assets/delete.png";
 import profileIcon from "../../assets/profile.png";
 import Popup from "../Popup/Popup";
+import Notification from "../Notification/Notifications.jsx";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -139,7 +140,7 @@ export default function Home() {
         <h1 className="home-title">Simple ToDo</h1>
         <div className="header-icons">
           <span>🔍</span>
-          <span>🔔</span>
+          <Notification />
           <img
             src={profileIcon}
             alt="Profil"

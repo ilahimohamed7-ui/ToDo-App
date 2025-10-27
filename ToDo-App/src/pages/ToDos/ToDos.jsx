@@ -6,6 +6,7 @@ import deleteIcon from "../../assets/delete.png";
 import backIcon from "../../assets/back.png";
 import profileIcon from "../../assets/profile.png";
 import Popup from "../Popup/Popup.jsx";
+import Notification from "../Notification/Notifications.jsx";
 
 export default function ToDos() {
   const navigate = useNavigate();
@@ -19,9 +20,6 @@ export default function ToDos() {
   const [projectName, setProjectName] = useState("");
   const [showPopup, setShowPopup] = useState(false);
   const [shareEmail, setShareEmail] = useState("");
-  const [shownReminders, setShownReminders] = useState([]);
-  const [reminderTodos, setReminderTodos] = useState([]);
-  const [showReminderPopup, setShowReminderPopup] = useState(false);
 
   //  Projekte  Todos beim Laden holen
   useEffect(() => {
@@ -108,6 +106,11 @@ export default function ToDos() {
       JSON.parse(localStorage.getItem(`todos_${userEmail}`)) || {};
     storedTodos[projectId] = updated;
     localStorage.setItem(`todos_${userEmail}`, JSON.stringify(storedTodos));
+
+    const allNotifications =
+      JSON.parse(localStorage.getItem("notifications")) || [];
+    const filtered = allNotifications.filter((n) => n.todoId !== id);
+    localStorage.setItem("notifications", JSON.stringify(filtered));
   };
 
   // Teilen
@@ -117,16 +120,54 @@ export default function ToDos() {
     setShareEmail("");
   };
 
-  useEffect(() => {
-    const now = new Date();
-    const reminders = todos.filter((todo) => {
-      if (!todo.dueDateTime) return false;
-      const todoDate = new Date(todo.dueDateTime);
-      const timeDiff = todoDate - now;
-      return timeDiff > 0 && timeDiff <= 15 * 60 * 1000;
-    });
+  const addNotification = (type, message, todoId = 0) => {
+    const stored = JSON.parse(localStorage.getItem("notifications")) || [];
 
-    setReminderTodos(reminders);
+    const exists = stored.some((n) => n.todoId === todoId && n.type === type);
+    if (exists) return;
+
+    const newNotification = {
+      id: Date.now(),
+      type,
+      message,
+      todoId,
+    };
+    localStorage.setItem(
+      "notifications",
+      JSON.stringify([...stored, newNotification])
+    );
+  };
+
+  // Erinnerungen prüfen
+  useEffect(() => {
+    const checkReminders = () => {
+      const now = new Date();
+      todos.forEach((todo) => {
+        if (!todo.dueDateTime || todo.completed) return;
+
+        const dueDate = new Date(todo.dueDateTime);
+        const timeDiff = dueDate.getTime() - now.getTime();
+        // Wenn die Aufgabe fällig ist oder die Zeit erreicht ist
+        if (timeDiff > 0 && timeDiff <= 15 * 60 * 1000) {
+          addNotification(
+            "reminder",
+            `Erinnerung: "${todo.name}" ist bald fällig!`,
+            todo.id
+          );
+        }
+        // direkt beim Ablauf
+        if (timeDiff <= 0 && timeDiff > -60000) {
+          addNotification(
+            "reminder",
+            `⚠️ "${todo.name}" ist jetzt fällig!`,
+            todo.id
+          );
+        }
+      });
+    };
+    checkReminders();
+    const interval = setInterval(checkReminders, 5000); // alle 60 Sekunden prüfen
+    return () => clearInterval(interval);
   }, [todos]);
 
   return (
@@ -141,17 +182,7 @@ export default function ToDos() {
           </div>
 
           <div className="header-icons">
-            <span
-              className="bell-icon"
-              onClick={() => setShowReminderPopup(!showReminderPopup)}
-            >
-              🔔
-              {reminderTodos.length > 0 && (
-                <span className="notification-badge">
-                  {reminderTodos.length}
-                </span>
-              )}
-            </span>
+            <Notification />
 
             <img
               src={profileIcon}
@@ -187,37 +218,6 @@ export default function ToDos() {
           )}
         </div>
       </header>
-
-      {showReminderPopup && (
-        <div className="reminder-popup">
-          <h3>Erinnerungen</h3>
-          {reminderTodos.length === 0 ? (
-            <p>Keine anstehenden Erinnerungen.</p>
-          ) : (
-            reminderTodos.map((todo) => (
-              <div
-                key={todo.id}
-                className="reminder-item"
-                onClick={() => {
-                  handleToggleCheckbox(todo.id);
-                  setShownReminders((prev) => [...prev, todo.id]);
-                }}
-              >
-                <span>{todo.name}</span>
-                {!shownReminders.includes(todo.id) && (
-                  <span className="reminder-time">
-                    Fällig um:{" "}
-                    {new Date(todo.dueDateTime).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-      )}
 
       {/* Eingabebereich */}
       <div className="todos-input-section">
