@@ -1,11 +1,12 @@
-import "./Home.css";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import "./Home.css";
 import shareIcon from "../../assets/share.png";
 import deleteIcon from "../../assets/delete.png";
 import profileIcon from "../../assets/profile.png";
 import Popup from "../Popup/Popup";
 import Notification from "../Notification/Notifications.jsx";
+import filterIcon from "../../assets/filter.png";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -15,6 +16,10 @@ export default function Home() {
   const [showPopup, setShowPopup] = useState(false);
   const [shareEmail, setShareEmail] = useState("");
   const [selectedProjectId, setSelectedProjectId] = useState(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filterType, setFilterType] = useState("none");
 
   // Beim Laden: Benutzer prüfen und Projekte laden
   useEffect(() => {
@@ -31,7 +36,7 @@ export default function Home() {
     setProjects(storedProjects);
   }, [navigate]);
 
-  //  Projekt hinzufügen
+  // Projekt hinzufügen
   const handleAddProject = () => {
     if (newProjectName.trim() === "") {
       alert("Bitte geben Sie einen Projektnamen ein.");
@@ -62,7 +67,7 @@ export default function Home() {
     setNewProjectName("");
   };
 
-  // 🗑 Projekt löschen
+  // Projekt löschen
   const handleDeleteProject = (id) => {
     const userEmail = localStorage.getItem("loggedInUser");
     if (!userEmail) return;
@@ -74,12 +79,12 @@ export default function Home() {
     localStorage.setItem(`projects_${userEmail}`, JSON.stringify(updated));
   };
 
-  // 📂 Todos öffnen
+  // Todos öffnen
   const handleOpenTodos = (id) => {
     navigate(`/todos?id=${id}`);
   };
 
-  //  Anzahl Aufgaben anzeigen
+  // Anzahl Aufgaben anzeigen
   const getTodoCount = (projectId) => {
     const userEmail = localStorage.getItem("loggedInUser");
     if (!userEmail) return 0;
@@ -88,7 +93,7 @@ export default function Home() {
     return storedTodos[projectId]?.length || 0;
   };
 
-  //  Projekt teilen
+  // Projekt teilen
   const handleSend = () => {
     const senderEmail = localStorage.getItem("loggedInUser");
     if (!shareEmail || shareEmail === senderEmail) {
@@ -133,13 +138,48 @@ export default function Home() {
     setShowPopup(false);
   };
 
+  //  Filter
+
+  const isProjectDone = (projectId) => {
+    const userEmail = localStorage.getItem("loggedInUser");
+    const todos = JSON.parse(localStorage.getItem(`todos_${userEmail}`)) || {};
+    const projectTodos = todos[projectId] || [];
+
+    if (projectTodos.length === 0) return false; // keine Todos = nicht fertig
+    return projectTodos.every((t) => t.completed); // true, wenn alle Todos abgehakt sind
+  };
+
+  //  Such und Filterlogik
+  let displayedProjects = projects.filter((p) =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (filterType === "newest") {
+    displayedProjects = [...displayedProjects].sort((a, b) => b.id - a.id);
+  } else if (filterType === "oldest") {
+    displayedProjects = [...displayedProjects].sort((a, b) => a.id - b.id);
+  } else if (filterType === "done") {
+    displayedProjects = displayedProjects.filter((p) => isProjectDone(p.id));
+  } else if (filterType === "open") {
+    displayedProjects = displayedProjects.filter((p) => !isProjectDone(p.id));
+  }
+
   return (
     <div className="home-container">
       {/* Header */}
       <header className="home-header">
         <h1 className="home-title">Simple ToDo</h1>
         <div className="header-icons">
-          <span>🔍</span>
+          <span className="icon-btn" onClick={() => setSearchOpen(!searchOpen)}>
+            🔍
+          </span>
+
+          <img
+            src={filterIcon}
+            alt="Filter"
+            className="icon-btn"
+            onClick={() => setFilterOpen(!filterOpen)}
+          />
           <Notification />
           <img
             src={profileIcon}
@@ -149,6 +189,35 @@ export default function Home() {
           />
         </div>
       </header>
+
+      {filterOpen && (
+        <div className="home-filter-menu">
+          <button onClick={() => setFilterType("none")}>Alle anzeigen</button>
+          <button onClick={() => setFilterType("newest")}>
+            Neueste zuerst
+          </button>
+          <button onClick={() => setFilterType("oldest")}>
+            Älteste zuerst
+          </button>
+          <button onClick={() => setFilterType("done")}>
+            Fertige Projekte
+          </button>
+          <button onClick={() => setFilterType("open")}>
+            Unerledigte Projekte
+          </button>
+        </div>
+      )}
+
+      {searchOpen && (
+        <div className="home-searchbar">
+          <input
+            type="text"
+            placeholder="Projekt suchen..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      )}
 
       {/* Inhalt */}
       <div className="home-content">
@@ -171,51 +240,51 @@ export default function Home() {
         <div className="todo-lists">
           <h3>ToDo-Listen:</h3>
 
-          {projects.length === 0 && (
+          {displayedProjects.length === 0 ? (
             <p>Keine ToDo-Listen vorhanden. Erstellen Sie eine neue!</p>
-          )}
+          ) : (
+            displayedProjects.map((project) => (
+              <div
+                key={project.id}
+                className="todo-box"
+                onClick={() => handleOpenTodos(project.id)}
+              >
+                <div className="todo-box-content">
+                  <div>
+                    <p className="todo-title">{project.name}</p>
+                    <p className="todo-subtext">
+                      {getTodoCount(project.id)} Aufgabe
+                      {getTodoCount(project.id) !== 1 && "n"}
+                    </p>
+                  </div>
+                  <div className="todo-icons">
+                    {/* Teilen */}
+                    <img
+                      src={shareIcon}
+                      alt="Teilen"
+                      className="icon-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedProjectId(project.id);
+                        setShowPopup(true);
+                      }}
+                    />
 
-          {projects.map((project) => (
-            <div
-              key={project.id}
-              className="todo-box"
-              onClick={() => handleOpenTodos(project.id)}
-            >
-              <div className="todo-box-content">
-                <div>
-                  <p className="todo-title">{project.name}</p>
-                  <p className="todo-subtext">
-                    {getTodoCount(project.id)} Aufgabe
-                    {getTodoCount(project.id) !== 1 && "n"}
-                  </p>
-                </div>
-                <div className="todo-icons">
-                  {/* Teilen */}
-                  <img
-                    src={shareIcon}
-                    alt="Teilen"
-                    className="icon-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedProjectId(project.id);
-                      setShowPopup(true);
-                    }}
-                  />
-
-                  {/* Löschen */}
-                  <img
-                    src={deleteIcon}
-                    alt="Löschen"
-                    className="icon-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteProject(project.id);
-                    }}
-                  />
+                    {/* Löschen */}
+                    <img
+                      src={deleteIcon}
+                      alt="Löschen"
+                      className="icon-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteProject(project.id);
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
 
           {/* Popup */}
           {showPopup && (

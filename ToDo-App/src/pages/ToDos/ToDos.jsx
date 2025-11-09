@@ -20,6 +20,8 @@ export default function ToDos() {
   const [projectName, setProjectName] = useState("");
   const [showPopup, setShowPopup] = useState(false);
   const [shareEmail, setShareEmail] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   //  Projekte  Todos beim Laden holen
   useEffect(() => {
@@ -182,6 +184,12 @@ export default function ToDos() {
           </div>
 
           <div className="header-icons">
+            <span
+              className="icon-btn"
+              onClick={() => setSearchOpen(!searchOpen)}
+            >
+              🔍
+            </span>
             <Notification />
 
             <img
@@ -219,6 +227,17 @@ export default function ToDos() {
         </div>
       </header>
 
+      {searchOpen && (
+        <div className="todos-searchbar">
+          <input
+            type="text"
+            placeholder="Aufgabe suchen..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      )}
+
       {/* Eingabebereich */}
       <div className="todos-input-section">
         <input
@@ -243,35 +262,40 @@ export default function ToDos() {
 
       {/* Aufgabenliste */}
       <div className="todos-list">
-        {todos.map((todo) => (
-          <div className="todo-item" key={todo.id}>
-            <div className="todo-left">
-              <input
-                type="checkbox"
-                className="todo-checkbox"
-                checked={todo.completed}
-                onChange={() => handleToggleCheckbox(todo.id)}
-              />
-              <span>{todo.name}</span>
+        {todos
+          .filter((t) => {
+            const term = (searchTerm || "").trim().toLowerCase();
+            return term === "" || (t.name || "").toLowerCase().includes(term);
+          })
+          .map((todo) => (
+            <div className="todo-item" key={todo.id}>
+              <div className="todo-left">
+                <input
+                  type="checkbox"
+                  className="todo-checkbox"
+                  checked={todo.completed}
+                  onChange={() => handleToggleCheckbox(todo.id)}
+                />
+                <span>{todo.name}</span>
+              </div>
+              <div className="todo-right">
+                {todo.dueDateTime && (
+                  <span className="todo-time">
+                    {new Date(todo.dueDateTime).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                )}
+                <img
+                  src={deleteIcon}
+                  alt="Löschen"
+                  className="icon-btn"
+                  onClick={() => handleDeleteTodo(todo.id)}
+                />
+              </div>
             </div>
-            <div className="todo-right">
-              {todo.dueDateTime && (
-                <span className="todo-time">
-                  {new Date(todo.dueDateTime).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
-              )}
-              <img
-                src={deleteIcon}
-                alt="Löschen"
-                className="icon-btn"
-                onClick={() => handleDeleteTodo(todo.id)}
-              />
-            </div>
-          </div>
-        ))}
+          ))}
       </div>
     </div>
   );
