@@ -192,3 +192,25 @@
   padding: 2px 6px;
   font-size: 12px;
 }
+
+.home-searchbar {
+  margin: 10px 40px;
+  display: flex;
+  justify-content: center;
+}
+
+.home-searchbar input {
+  width: 90%;
+  max-width: 400px;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.home-searchbar input:focus {
+  border-color: #3777ff;
+  box-shadow: 0 0 5px rgba(55, 119, 255, 0.4);
+}
