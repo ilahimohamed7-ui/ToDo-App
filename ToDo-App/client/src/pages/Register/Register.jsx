@@ -1,73 +1,93 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { api } from "../../api/axios";
 import "./Register.css";
 
 export default function Register() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [confirm, setConfirm] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
   const navigate = useNavigate();
 
-  const handleRegister = () => {
-    if (!email || !password) {
-      alert("❌ Bitte Email und Passwort eingeben.");
+  async function handleRegister(e) {
+    e.preventDefault();
+    setErr("");
+
+    if (!form.email || !form.password) {
+      setErr("Bitte Email und Passwort eingeben.");
+      return;
+    }
+    if (form.password !== confirm) {
+      setErr("Passwörter stimmen nicht überein.");
       return;
     }
 
-    if (password !== confirmPassword) {
-      alert("⚠️ Passwörter stimmen nicht überein.");
-      return;
+    setLoading(true);
+    try {
+      const { data } = await api.post("/auth/register", form);
+      // direkt einloggen
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      navigate("/home");
+    } catch (e) {
+      const msg =
+        e?.response?.data?.error?.message || "Registrierung fehlgeschlagen";
+      setErr(msg);
+    } finally {
+      setLoading(false);
     }
-
-    // Alle User laden
-    const allUsers = JSON.parse(localStorage.getItem("users")) || [];
-
-    // Prüfen, ob User bereits existiert
-    const userExists = allUsers.some((u) => u.email === email);
-    if (userExists) {
-      alert("⚠️ Benutzer existiert bereits. Bitte einloggen.");
-      return;
-    }
-
-    // Neuen Benutzer hinzufügen
-    const newUser = { email, password };
-    const updatedUsers = [...allUsers, newUser];
-    localStorage.setItem("users", JSON.stringify(updatedUsers));
-
-    alert("✅ Registrierung erfolgreich! Bitte einloggen.");
-    navigate("/"); // Weiter zur Login-Seite
-  };
+  }
 
   return (
     <div className="login-wrapper">
       <h1 className="login-title">Willkommen bei</h1>
       <h1 className="login-title-simple">Simple ToDo</h1>
 
-      <input
-        type="text"
-        placeholder="Email"
-        className="input-field"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <input
-        type="password"
-        placeholder="Passwort erstellen"
-        className="input-field"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <input
-        type="password"
-        placeholder="Passwort wiederholen"
-        className="input-field"
-        value={confirmPassword}
-        onChange={(e) => setConfirmPassword(e.target.value)}
-      />
+      {err && <p className="error">{err}</p>}
 
-      <button className="login-button" onClick={handleRegister}>
-        Registrieren
-      </button>
+      <form onSubmit={handleRegister}>
+        <input
+          type="text"
+          placeholder="Name (optional)"
+          className="input-field"
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+        />
+
+        <input
+          type="email"
+          placeholder="Email"
+          className="input-field"
+          value={form.email}
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
+          required
+        />
+
+        <input
+          type="password"
+          placeholder="Passwort erstellen"
+          className="input-field"
+          value={form.password}
+          onChange={(e) => setForm({ ...form, password: e.target.value })}
+          required
+          minLength={6}
+        />
+
+        <input
+          type="password"
+          placeholder="Passwort wiederholen"
+          className="input-field"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          required
+          minLength={6}
+        />
+
+        <button className="login-button" disabled={loading}>
+          {loading ? "Registrieren..." : "Registrieren"}
+        </button>
+      </form>
 
       <div className="register-link">
         <Link to="/">Schon einen Account? Login</Link>

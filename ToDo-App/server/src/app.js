@@ -1,23 +1,31 @@
-import express from 'express';
-import cors from 'cors';
-import morgan from 'morgan';
-import { env } from './config/env.js';
-import { errorHandler } from './middleware/errorHandler.js';
-import authRoutes from './routes/auth.routes.js';
+import express from "express";
+import cors from "cors";
+import morgan from "morgan";
+import { env } from "./config/env.js";
+import { errorHandler } from "./middleware/errorHandler.js";
+import authRoutes from "./routes/auth.routes.js";
+import projectRoutes from "./routes/project.routes.js";
+import pushRoutes from "./routes/push.routes.js";
 
 const app = express();
 
-app.use(morgan('dev'));
+app.use(morgan("dev"));
 app.use(cors({ origin: env.corsOrigin, credentials: true }));
 app.use(express.json());
 
-// Health
-app.get('/api/health', (_req, res) => res.json({ ok: true }));
+// Health Check
+app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
-// Routes
-app.use('/api/auth', authRoutes);
+// Auth-Routen
+app.use("/api/auth", authRoutes);
 
-// Errors
+// Projekt-Routen
+app.use("/api/projects", projectRoutes);
+
+// Push-Routen
+app.use("/api/push", pushRoutes);
+
+// Error-Handler MUSS zum Schluss kommen
 app.use(errorHandler);
 
 export default app;

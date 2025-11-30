@@ -7,6 +7,8 @@ import backIcon from "../../assets/back.png";
 import profileIcon from "../../assets/profile.png";
 import Popup from "../Popup/Popup.jsx";
 import Notification from "../Notification/Notifications.jsx";
+import { api } from "../../api/axios";
+import { socket } from "../../socket.js";
 
 export default function ToDos() {
   const navigate = useNavigate();
@@ -23,106 +25,152 @@ export default function ToDos() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
-  //  Projekte  Todos beim Laden holen
   useEffect(() => {
-    const userEmail = localStorage.getItem("loggedInUser");
-    if (!userEmail) {
+    if (!projectId) return;
+
+    // Socket verbinden (falls noch nicht)
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    // Projekt-Raum joinen
+    socket.emit("joinProject", projectId);
+
+    // Handler für Projekt-Updates
+    const handleProjectUpdate = (project) => {
+      if (project._id === projectId) {
+        setProjectName(project.name);
+        setTodos(project.tasks || []);
+      }
+    };
+
+    socket.on("project:updated", handleProjectUpdate);
+
+    // Cleanup beim Verlassen
+    return () => {
+      socket.emit("leaveProject", projectId);
+      socket.off("project:updated", handleProjectUpdate);
+      // socket.disconnect();  // optional, wenn du Socket komplett trennen willst
+    };
+  }, [projectId]);
+
+  // Projekt + Tasks von der API laden
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
       navigate("/");
       return;
     }
-
-    // Projekt laden
-    const storedProjects =
-      JSON.parse(localStorage.getItem(`projects_${userEmail}`)) || [];
-    const currentProject = storedProjects.find(
-      (p) => p.id.toString() === projectId
-    );
-
-    if (currentProject) {
-      setProjectName(currentProject.name);
-    } else {
+    if (!projectId) {
       navigate("/home");
       return;
     }
 
-    // Todos laden
-    const storedTodos =
-      JSON.parse(localStorage.getItem(`todos_${userEmail}`)) || {};
-    setTodos(storedTodos[projectId] || []);
+    async function loadProject() {
+      try {
+        const { data } = await api.get("/projects");
+        const project = (data.projects || []).find((p) => p._id === projectId);
+        if (!project) {
+          navigate("/home");
+          return;
+        }
+        setProjectName(project.name);
+        setTodos(project.tasks || []);
+      } catch (e) {
+        console.error(e);
+        if (e.response?.status === 401) navigate("/");
+      }
+    }
+
+    loadProject();
   }, [projectId, navigate]);
 
-  // Aufgabe hinzufügen
-  const handleAddTodo = () => {
-    const userEmail = localStorage.getItem("loggedInUser");
-    if (!userEmail) return;
-
-    if (newTodoText.trim() === "") {
+  // Aufgabe hinzufügen (API)
+  const handleAddTodo = async () => {
+    if (!newTodoText.trim()) {
       alert("Bitte geben Sie eine Aufgabe ein.");
       return;
     }
 
-    const newTask = {
-      id: Date.now(),
-      name: newTodoText,
-      completed: false,
-      dueDateTime: newTodoTime,
-    };
-
-    const updatedTodos = [...todos, newTask];
-    setTodos(updatedTodos);
-
-    const storedTodos =
-      JSON.parse(localStorage.getItem(`todos_${userEmail}`)) || {};
-    storedTodos[projectId] = updatedTodos;
-    localStorage.setItem(`todos_${userEmail}`, JSON.stringify(storedTodos));
-
-    setNewTodoText("");
-    setNewTodoTime("");
+    try {
+      const { data } = await api.post(`/projects/${projectId}/tasks`, {
+        title: newTodoText,
+        dueDateTime: newTodoTime || null,
+      });
+      setTodos(data.project.tasks || []);
+      setNewTodoText("");
+      setNewTodoTime("");
+    } catch (e) {
+      console.error(e);
+      alert("Aufgabe konnte nicht hinzugefügt werden.");
+    }
   };
 
-  //  Aufgabe löschen
-  const handleDeleteTodo = (id) => {
-    const userEmail = localStorage.getItem("loggedInUser");
-    if (!userEmail) return;
+  // Aufgabe löschen (API)
+  const handleDeleteTodo = async (taskId) => {
+    try {
+      const { data } = await api.delete(
+        `/projects/${projectId}/tasks/${taskId}`
+      );
+      setTodos(data.project.tasks || []);
 
-    const updated = todos.filter((t) => t.id !== id);
-    setTodos(updated);
-
-    const storedTodos =
-      JSON.parse(localStorage.getItem(`todos_${userEmail}`)) || {};
-    storedTodos[projectId] = updated;
-    localStorage.setItem(`todos_${userEmail}`, JSON.stringify(storedTodos));
+      // Notifications aufräumen
+      const allNotifications =
+        JSON.parse(localStorage.getItem("notifications")) || [];
+      const filtered = allNotifications.filter((n) => n.todoId !== taskId);
+      localStorage.setItem("notifications", JSON.stringify(filtered));
+    } catch (e) {
+      console.error(e);
+      alert("Aufgabe konnte nicht gelöscht werden.");
+    }
   };
 
-  //  Checkbox toggeln
-  const handleToggleCheckbox = (id) => {
-    const userEmail = localStorage.getItem("loggedInUser");
-    if (!userEmail) return;
+  // Checkbox toggeln (completed)
+  const handleToggleCheckbox = async (taskId) => {
+    const todo = todos.find((t) => t._id === taskId);
+    if (!todo) return;
 
-    const updated = todos.map((t) =>
-      t.id === id ? { ...t, completed: !t.completed } : t
-    );
-    setTodos(updated);
+    try {
+      const { data } = await api.patch(
+        `/projects/${projectId}/tasks/${taskId}`,
+        { completed: !todo.completed }
+      );
+      setTodos(data.project.tasks || []);
 
-    const storedTodos =
-      JSON.parse(localStorage.getItem(`todos_${userEmail}`)) || {};
-    storedTodos[projectId] = updated;
-    localStorage.setItem(`todos_${userEmail}`, JSON.stringify(storedTodos));
-
-    const allNotifications =
-      JSON.parse(localStorage.getItem("notifications")) || [];
-    const filtered = allNotifications.filter((n) => n.todoId !== id);
-    localStorage.setItem("notifications", JSON.stringify(filtered));
+      // Notifications bei Abschluss löschen
+      const allNotifications =
+        JSON.parse(localStorage.getItem("notifications")) || [];
+      const filtered = allNotifications.filter((n) => n.todoId !== taskId);
+      localStorage.setItem("notifications", JSON.stringify(filtered));
+    } catch (e) {
+      console.error(e);
+      alert("Status konnte nicht geändert werden.");
+    }
   };
 
-  // Teilen
-  const handleSend = () => {
-    alert(`ToDo-Liste wurde geteilt mit: ${shareEmail}`);
-    setShowPopup(false);
-    setShareEmail("");
+  // Teilen (über API)
+  const handleSend = async () => {
+    try {
+      if (!shareEmail.trim()) {
+        alert("Bitte E-Mail-Adresse eingeben.");
+        return;
+      }
+      await api.post(`/projects/${projectId}/collaborators`, {
+        email: shareEmail.trim().toLowerCase(),
+      });
+      alert(`ToDo-Liste wurde geteilt mit: ${shareEmail}`);
+      setShowPopup(false);
+      setShareEmail("");
+    } catch (e) {
+      console.error(e);
+      alert(
+        e?.response?.data?.error?.message ||
+          "Teilen der ToDo-Liste ist fehlgeschlagen."
+      );
+    }
   };
 
-  const addNotification = (type, message, todoId = 0) => {
+  const addNotification = (type, message, todoId = "") => {
     const stored = JSON.parse(localStorage.getItem("notifications")) || [];
 
     const exists = stored.some((n) => n.todoId === todoId && n.type === type);
@@ -140,7 +188,7 @@ export default function ToDos() {
     );
   };
 
-  // Erinnerungen prüfen
+  // Erinnerungen prüfen (weiterhin lokal)
   useEffect(() => {
     const checkReminders = () => {
       const now = new Date();
@@ -148,27 +196,27 @@ export default function ToDos() {
         if (!todo.dueDateTime || todo.completed) return;
 
         const dueDate = new Date(todo.dueDateTime);
-        const timeDiff = dueDate.getTime() - now.getTime();
-        // Wenn die Aufgabe fällig ist oder die Zeit erreicht ist
-        if (timeDiff > 0 && timeDiff <= 15 * 60 * 1000) {
+        const diff = dueDate.getTime() - now.getTime();
+
+        if (diff > 0 && diff <= 15 * 60 * 1000) {
           addNotification(
             "reminder",
-            `Erinnerung: "${todo.name}" ist bald fällig!`,
-            todo.id
+            `Erinnerung: "${todo.title}" ist bald fällig!`,
+            todo._id
           );
         }
-        // direkt beim Ablauf
-        if (timeDiff <= 0 && timeDiff > -60000) {
+        if (diff <= 0 && diff > -60000) {
           addNotification(
             "reminder",
-            `⚠️ "${todo.name}" ist jetzt fällig!`,
-            todo.id
+            `⚠️ "${todo.title}" ist jetzt fällig!`,
+            todo._id
           );
         }
       });
     };
+
     checkReminders();
-    const interval = setInterval(checkReminders, 5000); // alle 60 Sekunden prüfen
+    const interval = setInterval(checkReminders, 5000);
     return () => clearInterval(interval);
   }, [todos]);
 
@@ -176,7 +224,6 @@ export default function ToDos() {
     <div>
       {/* Header */}
       <header className="todos-header">
-        {/* Obere Leiste */}
         <div className="todos-topbar">
           <div className="back-section" onClick={() => navigate("/home")}>
             <img src={backIcon} alt="Zurück" className="icon-btn" />
@@ -191,7 +238,6 @@ export default function ToDos() {
               🔍
             </span>
             <Notification />
-
             <img
               src={profileIcon}
               alt="Profil"
@@ -203,7 +249,6 @@ export default function ToDos() {
 
         <hr className="header-divider" />
 
-        {/* Titelzeile */}
         <div className="todos-titlebar">
           <h1>ToDos für: {projectName}</h1>
           <img
@@ -265,18 +310,18 @@ export default function ToDos() {
         {todos
           .filter((t) => {
             const term = (searchTerm || "").trim().toLowerCase();
-            return term === "" || (t.name || "").toLowerCase().includes(term);
+            return term === "" || (t.title || "").toLowerCase().includes(term);
           })
           .map((todo) => (
-            <div className="todo-item" key={todo.id}>
+            <div className="todo-item" key={todo._id}>
               <div className="todo-left">
                 <input
                   type="checkbox"
                   className="todo-checkbox"
-                  checked={todo.completed}
-                  onChange={() => handleToggleCheckbox(todo.id)}
+                  checked={!!todo.completed}
+                  onChange={() => handleToggleCheckbox(todo._id)}
                 />
-                <span>{todo.name}</span>
+                <span>{todo.title}</span>
               </div>
               <div className="todo-right">
                 {todo.dueDateTime && (
@@ -291,7 +336,7 @@ export default function ToDos() {
                   src={deleteIcon}
                   alt="Löschen"
                   className="icon-btn"
-                  onClick={() => handleDeleteTodo(todo.id)}
+                  onClick={() => handleDeleteTodo(todo._id)}
                 />
               </div>
             </div>

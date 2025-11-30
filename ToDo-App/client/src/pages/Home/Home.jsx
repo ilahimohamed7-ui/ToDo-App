@@ -1,10 +1,13 @@
 import "./Home.css";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { api } from "../../api/axios";
 import shareIcon from "../../assets/share.png";
 import deleteIcon from "../../assets/delete.png";
 import profileIcon from "../../assets/profile.png";
+import filterIcon from "../../assets/filter.png"; // dein Filter-Icon
 import Popup from "../Popup/Popup";
+import { subscribeToPush } from "../../api/push";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -15,121 +18,122 @@ export default function Home() {
   const [shareEmail, setShareEmail] = useState("");
   const [selectedProjectId, setSelectedProjectId] = useState(null);
 
-  // Beim Laden: Benutzer prüfen und Projekte laden
+  // Suche
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Filter-Menü
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
+  const [filterType, setFilterType] = useState("all"); // all | done | notDone
+  const [sortType, setSortType] = useState("newest"); // newest | oldest
+
+  // 🔒 Nur eingeloggte Nutzer
   useEffect(() => {
-    const loggedIn = localStorage.getItem("loggedIn");
-    const userEmail = localStorage.getItem("loggedInUser");
-
-    if (!loggedIn || !userEmail) {
+    const token = localStorage.getItem("token");
+    if (!token) {
       navigate("/");
       return;
     }
+    loadProjects();
+  }, []);
 
-    const storedProjects =
-      JSON.parse(localStorage.getItem(`projects_${userEmail}`)) || [];
-    setProjects(storedProjects);
-  }, [navigate]);
+  //  Projekte laden
+  async function loadProjects() {
+    try {
+      const { data } = await api.get("/projects");
+      setProjects(data.projects || []);
+    } catch (e) {
+      console.error(e);
+      if (e.response?.status === 401) navigate("/");
+    }
+  }
 
-  //  Projekt hinzufügen
-  const handleAddProject = () => {
-    if (newProjectName.trim() === "") {
-      alert("Bitte geben Sie einen Projektnamen ein.");
+  //  Projekt erstellen
+  async function handleAddProject() {
+    if (!newProjectName.trim()) {
+      alert("Bitte Projektnamen eingeben.");
       return;
     }
-
-    const userEmail = localStorage.getItem("loggedInUser");
-    if (!userEmail) {
-      alert("Fehler: Kein Benutzer gefunden. Bitte neu einloggen.");
-      navigate("/");
-      return;
+    try {
+      const { data } = await api.post("/projects", { name: newProjectName });
+      setProjects([...projects, data.project]);
+      setNewProjectName("");
+    } catch (e) {
+      console.error(e);
+      alert("Fehler beim Erstellen des Projekts.");
     }
+  }
 
-    const storedProjects =
-      JSON.parse(localStorage.getItem(`projects_${userEmail}`)) || [];
+  //  Projekt löschen
+  async function handleDeleteProject(id) {
+    if (!window.confirm("Projekt wirklich löschen?")) return;
+    try {
+      await api.delete(`/projects/${id}`);
+      setProjects(projects.filter((p) => p._id !== id));
+    } catch (e) {
+      console.error(e);
+      alert("Löschen fehlgeschlagen");
+    }
+  }
 
-    const newProject = {
-      id: Date.now(),
-      name: newProjectName,
-    };
-
-    const updatedProjects = [...storedProjects, newProject];
-    setProjects(updatedProjects);
-    localStorage.setItem(
-      `projects_${userEmail}`,
-      JSON.stringify(updatedProjects)
-    );
-    setNewProjectName("");
-  };
-
-  // 🗑 Projekt löschen
-  const handleDeleteProject = (id) => {
-    const userEmail = localStorage.getItem("loggedInUser");
-    if (!userEmail) return;
-
-    const storedProjects =
-      JSON.parse(localStorage.getItem(`projects_${userEmail}`)) || [];
-    const updated = storedProjects.filter((p) => p.id !== id);
-    setProjects(updated);
-    localStorage.setItem(`projects_${userEmail}`, JSON.stringify(updated));
-  };
-
-  // 📂 Todos öffnen
-  const handleOpenTodos = (id) => {
+  //  Todos öffnen
+  function handleOpenTodos(id) {
     navigate(`/todos?id=${id}`);
-  };
+  }
 
-  //  Anzahl Aufgaben anzeigen
-  const getTodoCount = (projectId) => {
-    const userEmail = localStorage.getItem("loggedInUser");
-    if (!userEmail) return 0;
-    const storedTodos =
-      JSON.parse(localStorage.getItem(`todos_${userEmail}`)) || {};
-    return storedTodos[projectId]?.length || 0;
-  };
-
-  //  Projekt teilen
-  const handleSend = () => {
-    const senderEmail = localStorage.getItem("loggedInUser");
-    if (!shareEmail || shareEmail === senderEmail) {
-      alert("❌ Ungültige Empfänger-Adresse");
-      return;
+  //  Teilen
+  async function handleSend() {
+    try {
+      await api.post(`/projects/${selectedProjectId}/collaborators`, {
+        email: shareEmail,
+      });
+      alert("Projekt erfolgreich geteilt!");
+      setShareEmail("");
+      setShowPopup(false);
+    } catch (e) {
+      alert(e?.response?.data?.error?.message || "Teilen fehlgeschlagen.");
     }
+  }
 
-    const projectToShare = projects.find((p) => p.id === selectedProjectId);
-    if (!projectToShare) return;
+  // 🔎 Projekte nach Suche + Filter + Sortierung
+  const visibleProjects = projects
+    .filter((project) => {
+      const name = (project.name || "").toLowerCase();
+      const term = searchTerm.trim().toLowerCase();
 
-    const recipientProjects =
-      JSON.parse(localStorage.getItem(`projects_${shareEmail}`)) || [];
+      // Suche
+      const matchesSearch = term === "" || name.includes(term);
 
-    const alreadyExists = recipientProjects.some(
-      (p) => p.id === projectToShare.id
-    );
+      // Task-Status
+      const tasks = project.tasks || [];
+      const hasTasks = tasks.length > 0;
+      const allDone = hasTasks && tasks.every((t) => t.completed);
+      const hasNotDone = tasks.some((t) => !t.completed);
 
-    if (!alreadyExists) {
-      recipientProjects.push(projectToShare);
-      localStorage.setItem(
-        `projects_${shareEmail}`,
-        JSON.stringify(recipientProjects)
-      );
-      alert(`✅ Projekt wurde mit ${shareEmail} geteilt`);
-    } else {
-      alert("⚠️ Dieses Projekt wurde bereits geteilt.");
-    }
+      // Filter-Typ
+      if (filterType === "done" && !allDone) return false; // nur Projekte, bei denen ALLE Tasks completed sind
+      if (filterType === "notDone" && !hasNotDone) return false; // Projekte mit mind. 1 offenem Task
 
-    const senderTodos =
-      JSON.parse(localStorage.getItem(`todos_${senderEmail}`)) || {};
-    const recipientTodos =
-      JSON.parse(localStorage.getItem(`todos_${shareEmail}`)) || {};
-    if (senderTodos[selectedProjectId]) {
-      recipientTodos[selectedProjectId] = senderTodos[selectedProjectId];
-      localStorage.setItem(
-        `todos_${shareEmail}`,
-        JSON.stringify(recipientTodos)
-      );
-    }
+      return matchesSearch;
+    })
+    .sort((a, b) => {
+      // Sortierung nach createdAt
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
 
-    setShareEmail("");
-    setShowPopup(false);
+      if (sortType === "newest") {
+        // Neu → Alt
+        return dateB - dateA;
+      }
+      if (sortType === "oldest") {
+        // Alt → Neu
+        return dateA - dateB;
+      }
+      return 0;
+    });
+
+  const sendTestPush = async () => {
+    await api.post("/push/test");
   };
 
   return (
@@ -137,23 +141,107 @@ export default function Home() {
       {/* Header */}
       <header className="home-header">
         <h1 className="home-title">Simple ToDo</h1>
+
         <div className="header-icons">
-          <span>🔍</span>
+          {/* Filter-Icon öffnet Menü */}
+          <img
+            src={filterIcon}
+            alt="Filter"
+            className="icon-btn"
+            title="Filter & Sortierung"
+            onClick={() => setFilterMenuOpen((prev) => !prev)}
+          />
+
+          {/* Such-Icon */}
+          <span
+            className="icon-btn"
+            title="Projekte suchen"
+            onClick={() => setSearchOpen((prev) => !prev)}
+          >
+            🔍
+          </span>
+
+          {/* „Benachrichtigungen“ Dummy */}
           <span>🔔</span>
+
+          {/* Profil */}
           <img
             src={profileIcon}
             alt="Profil"
             className="icon-btn"
             onClick={() => navigate("/profile")}
           />
+          <button onClick={subscribeToPush}> Push aktivieren </button>
+          <button onClick={sendTestPush}> Test-Push senden </button>
         </div>
       </header>
+
+      {/* Filter-Menü */}
+      {filterMenuOpen && (
+        <div className="filter-menu">
+          <p className="filter-title">Filter</p>
+          <button
+            className={
+              filterType === "all" ? "filter-btn active" : "filter-btn"
+            }
+            onClick={() => setFilterType("all")}
+          >
+            Alle Projekte
+          </button>
+          <button
+            className={
+              filterType === "done" ? "filter-btn active" : "filter-btn"
+            }
+            onClick={() => setFilterType("done")}
+          >
+            Gemachte Projekte
+          </button>
+          <button
+            className={
+              filterType === "notDone" ? "filter-btn active" : "filter-btn"
+            }
+            onClick={() => setFilterType("notDone")}
+          >
+            Nicht gemachte Projekte
+          </button>
+
+          <p className="filter-title">Sortieren</p>
+          <button
+            className={
+              sortType === "newest" ? "filter-btn active" : "filter-btn"
+            }
+            onClick={() => setSortType("newest")}
+          >
+            Neu → Alt
+          </button>
+          <button
+            className={
+              sortType === "oldest" ? "filter-btn active" : "filter-btn"
+            }
+            onClick={() => setSortType("oldest")}
+          >
+            Alt → Neu
+          </button>
+        </div>
+      )}
+
+      {/* Suchfeld */}
+      {searchOpen && (
+        <div className="home-searchbar">
+          <input
+            type="text"
+            placeholder="Projekt suchen..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      )}
 
       {/* Inhalt */}
       <div className="home-content">
         {/* Projekt erstellen */}
         <div className="todo-create">
-          <h3>Neue ToDo erstellen:</h3>
+          <h3>Neue ToDo-Liste:</h3>
           <input
             type="text"
             placeholder="Name"
@@ -168,47 +256,40 @@ export default function Home() {
 
         {/* Projektliste */}
         <div className="todo-lists">
-          <h3>ToDo-Listen:</h3>
+          <h3>Deine Projekte:</h3>
+          {visibleProjects.length === 0 && <p>Keine Projekte gefunden.</p>}
 
-          {projects.length === 0 && (
-            <p>Keine ToDo-Listen vorhanden. Erstellen Sie eine neue!</p>
-          )}
-
-          {projects.map((project) => (
+          {visibleProjects.map((project) => (
             <div
-              key={project.id}
+              key={project._id}
               className="todo-box"
-              onClick={() => handleOpenTodos(project.id)}
+              onClick={() => handleOpenTodos(project._id)}
             >
               <div className="todo-box-content">
                 <div>
                   <p className="todo-title">{project.name}</p>
                   <p className="todo-subtext">
-                    {getTodoCount(project.id)} Aufgabe
-                    {getTodoCount(project.id) !== 1 && "n"}
+                    {project.tasks?.length || 0} Aufgaben
                   </p>
                 </div>
                 <div className="todo-icons">
-                  {/* Teilen */}
                   <img
                     src={shareIcon}
                     alt="Teilen"
                     className="icon-btn"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setSelectedProjectId(project.id);
+                      setSelectedProjectId(project._id);
                       setShowPopup(true);
                     }}
                   />
-
-                  {/* Löschen */}
                   <img
                     src={deleteIcon}
                     alt="Löschen"
                     className="icon-btn"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDeleteProject(project.id);
+                      handleDeleteProject(project._id);
                     }}
                   />
                 </div>
@@ -216,10 +297,9 @@ export default function Home() {
             </div>
           ))}
 
-          {/* Popup */}
           {showPopup && (
             <Popup
-              title="Teilen Sie Ihre ToDo-Liste"
+              title="Projekt teilen"
               onClose={() => setShowPopup(false)}
               onSend={handleSend}
               value={shareEmail}

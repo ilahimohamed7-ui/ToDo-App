@@ -1,60 +1,66 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { api } from "../../api/axios";
 import "./Login.css";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = () => {
-    // Alle User laden
-    const allUsers = JSON.parse(localStorage.getItem("users")) || [];
-
-    // Benutzer suchen
-    const storedUser = allUsers.find((u) => u.email === email);
-
-    if (!storedUser) {
-      alert("❌ Kein Benutzer mit dieser E-Mail gefunden! Bitte registrieren.");
-      return;
-    }
-
-    // Passwort prüfen
-    if (password === storedUser.password) {
-      localStorage.setItem("loggedIn", "true");
-      localStorage.setItem("loggedInUser", email);
-      alert("✅ Login erfolgreich!");
+  async function handleLogin(e) {
+    e.preventDefault();
+    setErr("");
+    setLoading(true);
+    try {
+      const payload = {
+        email: (email || "").trim().toLowerCase(),
+        password: (password || "").trim(),
+      };
+      const { data } = await api.post("/auth/login", payload);
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
       navigate("/home");
-    } else {
-      alert("⚠️ Falsches Passwort. Bitte erneut versuchen.");
+    } catch (e) {
+      const msg = e?.response?.data?.error?.message || "Login fehlgeschlagen";
+      setErr(msg);
+    } finally {
+      setLoading(false);
     }
-  };
+  }
 
   return (
     <div className="login-wrapper">
       <h1 className="login-title">Willkommen zurück bei</h1>
       <h1 className="login-title-simple">Simple ToDo</h1>
 
-      <input
-        type="text"
-        placeholder="Email"
-        className="input-field"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
+      {err && <p className="error">{err}</p>}
 
-      <input
-        type="password"
-        placeholder="Password"
-        className="input-field"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+      <form onSubmit={handleLogin}>
+        <input
+          type="email"
+          placeholder="Email"
+          className="input-field"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
 
-      <button className="login-button" onClick={handleLogin}>
-        Login
-      </button>
+        <input
+          type="password"
+          placeholder="Passwort"
+          className="input-field"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+
+        <button className="login-button" disabled={loading}>
+          {loading ? "Einloggen..." : "Login"}
+        </button>
+      </form>
 
       <div className="register-link">
         <Link to="/register">Noch keinen Account? Registrieren</Link>
