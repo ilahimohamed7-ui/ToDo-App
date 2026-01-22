@@ -12,6 +12,8 @@ import {
 import { router, useLocalSearchParams } from "expo-router";
 import { api } from "../../lib/api";
 import { getToken, clearAuth } from "../../lib/auth";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 
 type Task = {
   _id: string;
@@ -153,7 +155,8 @@ export default function TodosScreen() {
   }
 
   return (
-    <View style={{ flex: 1, padding: 16, gap: 12 }}>
+  <SafeAreaView style={{ flex: 1, paddingHorizontal: 16, paddingTop: 8, gap: 12 }}>
+
       {/* Header */}
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
         <Pressable
@@ -257,6 +260,6 @@ export default function TodosScreen() {
           )}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }

@@ -50,7 +50,7 @@ export default function ToDos() {
     return () => {
       socket.emit("leaveProject", projectId);
       socket.off("project:updated", handleProjectUpdate);
-      // socket.disconnect();  // optional, wenn du Socket komplett trennen willst
+      // socket.disconnect();
     };
   }, [projectId]);
 
@@ -110,7 +110,7 @@ export default function ToDos() {
   const handleDeleteTodo = async (taskId) => {
     try {
       const { data } = await api.delete(
-        `/projects/${projectId}/tasks/${taskId}`
+        `/projects/${projectId}/tasks/${taskId}`,
       );
       setTodos(data.project.tasks || []);
 
@@ -133,7 +133,7 @@ export default function ToDos() {
     try {
       const { data } = await api.patch(
         `/projects/${projectId}/tasks/${taskId}`,
-        { completed: !todo.completed }
+        { completed: !todo.completed },
       );
       setTodos(data.project.tasks || []);
 
@@ -165,7 +165,7 @@ export default function ToDos() {
       console.error(e);
       alert(
         e?.response?.data?.error?.message ||
-          "Teilen der ToDo-Liste ist fehlgeschlagen."
+          "Teilen der ToDo-Liste ist fehlgeschlagen.",
       );
     }
   };
@@ -184,7 +184,7 @@ export default function ToDos() {
     };
     localStorage.setItem(
       "notifications",
-      JSON.stringify([...stored, newNotification])
+      JSON.stringify([...stored, newNotification]),
     );
   };
 
@@ -202,14 +202,14 @@ export default function ToDos() {
           addNotification(
             "reminder",
             `Erinnerung: "${todo.title}" ist bald fällig!`,
-            todo._id
+            todo._id,
           );
         }
         if (diff <= 0 && diff > -60000) {
           addNotification(
             "reminder",
             `⚠️ "${todo.title}" ist jetzt fällig!`,
-            todo._id
+            todo._id,
           );
         }
       });

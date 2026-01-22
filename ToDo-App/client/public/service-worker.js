@@ -1,4 +1,4 @@
-// Wird aufgerufen, wenn vom Server ein Push-Event kommt
+// Wird aufgerufen wenn vom Server ein Push Event kommt
 self.addEventListener("push", (event) => {
   console.log("[Service Worker] Push empfangen:", event.data && event.data.text());
 

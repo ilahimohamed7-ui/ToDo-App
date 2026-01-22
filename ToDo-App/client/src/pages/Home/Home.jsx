@@ -27,7 +27,7 @@ export default function Home() {
   const [filterType, setFilterType] = useState("all"); // all | done | notDone
   const [sortType, setSortType] = useState("newest"); // newest | oldest
 
-  // 🔒 Nur eingeloggte Nutzer
+  //  Nur eingeloggte Nutzer
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -95,7 +95,7 @@ export default function Home() {
     }
   }
 
-  // 🔎 Projekte nach Suche + Filter + Sortierung
+  //  Projekte nach Suche + Filter + Sortierung
   const visibleProjects = projects
     .filter((project) => {
       const name = (project.name || "").toLowerCase();
@@ -111,7 +111,7 @@ export default function Home() {
       const hasNotDone = tasks.some((t) => !t.completed);
 
       // Filter-Typ
-      if (filterType === "done" && !allDone) return false; // nur Projekte, bei denen ALLE Tasks completed sind
+      if (filterType === "done" && !allDone) return false; // nur Projekte bei denen ALLE Tasks completed sind
       if (filterType === "notDone" && !hasNotDone) return false; // Projekte mit mind. 1 offenem Task
 
       return matchesSearch;
@@ -122,11 +122,11 @@ export default function Home() {
       const dateB = new Date(b.createdAt);
 
       if (sortType === "newest") {
-        // Neu → Alt
+        // Neu --> Alt
         return dateB - dateA;
       }
       if (sortType === "oldest") {
-        // Alt → Neu
+        // Alt --> Neu
         return dateA - dateB;
       }
       return 0;
@@ -161,7 +161,7 @@ export default function Home() {
             🔍
           </span>
 
-          {/* „Benachrichtigungen“ Dummy */}
+          {/* Benachrichtigungen Dummy*/}
           <span>🔔</span>
 
           {/* Profil */}

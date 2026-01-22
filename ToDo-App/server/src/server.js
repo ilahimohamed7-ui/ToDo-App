@@ -22,22 +22,22 @@ app.set("io", io);
 
 // Socket.io Events
 io.on("connection", (socket) => {
-  console.log("🔌 Socket connected:", socket.id);
+  console.log(" Socket connected:", socket.id);
 
   // Raum für Projekt beitreten
   socket.on("joinProject", (projectId) => {
-    console.log(`➡️ ${socket.id} joined project ${projectId}`);
+    console.log(` ${socket.id} joined project ${projectId}`);
     socket.join(projectId);
   });
 
   // Raum verlassen
   socket.on("leaveProject", (projectId) => {
-    console.log(`⬅️ ${socket.id} left project ${projectId}`);
+    console.log(` ${socket.id} left project ${projectId}`);
     socket.leave(projectId);
   });
 
   socket.on("disconnect", () => {
-    console.log("❌ Socket disconnected:", socket.id);
+    console.log(" Socket disconnected:", socket.id);
   });
 });
 
@@ -45,7 +45,7 @@ async function bootstrap() {
   await connectDB();
 
   server.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(` Server running on http://localhost:${PORT}`);
   });
 }
 

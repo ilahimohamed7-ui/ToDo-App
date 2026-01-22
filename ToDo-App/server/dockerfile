@@ -1,31 +1,29 @@
-# Backend Dockerfile
-
-#  Basis-Image
-FROM node:20-alpine
 
 
 FROM node:20-alpine
 
-# Zeitzone auf Europe/Berlin setzen
+
+FROM node:20-alpine
+
+
 RUN apk add --no-cache tzdata \
   && cp /usr/share/zoneinfo/Europe/Berlin /etc/localtime \
   && echo "Europe/Berlin" > /etc/timezone
 
 ENV TZ=Europe/Berlin
-# Arbeitsverzeichnis
+
 WORKDIR /app
 
-#  package.json & lockfile kopieren
 COPY package*.json ./
 
-#  Dependencies installieren
+
 RUN npm install --omit=dev
 
-#  Source-Code kopieren
+
 COPY src ./src
 
-#  Port freigeben (Express läuft auf 4000)
+
 EXPOSE 4000
 
-#  Start-Befehl
+
 CMD ["npm", "run", "start"]

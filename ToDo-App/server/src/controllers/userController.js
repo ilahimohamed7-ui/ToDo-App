@@ -12,9 +12,9 @@ export const userController = {
 
       const user = await User.findByIdAndUpdate(
         req.user._id,
-        { name: username.trim() },      // ✅ Schema-Feld heißt "name"
+        { name: username.trim() },      // Schema-Feld heißt "name"
         { new: true }
-      ).select("-passwordHash");        // ✅ Schema-Feld heißt "passwordHash"
+      ).select("-passwordHash");        //  Schema-Feld heißt "passwordHash"
 
       res.json({ user });
     } catch (e) {
@@ -35,7 +35,7 @@ export const userController = {
       const hashed = await bcrypt.hash(password.trim(), 10);
 
       await User.findByIdAndUpdate(req.user._id, {
-        passwordHash: hashed,          // ✅ richtiges Feld
+        passwordHash: hashed,          //  richtiges Feld
       });
 
       res.json({ ok: true });

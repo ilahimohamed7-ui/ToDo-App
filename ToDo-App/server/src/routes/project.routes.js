@@ -4,7 +4,7 @@ import { auth } from "../middleware/auth.js";
 
 const router = Router();
 
-router.use(auth(true));
+router.use(auth(true));  // Request zuerst den JWT prüft
 
 router.get("/", projectController.getAll);
 router.post("/", projectController.create);

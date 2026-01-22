@@ -2,7 +2,7 @@
 import webpush from "web-push";
 import { env } from "./env.js";
 
-// Hier siehst du im Terminal, ob deine ENV-Werte wirklich ankommen:
+// Hier ob  ENV-Werte wirklich ankommen
 console.log("VAPID CONFIG:", {
   subject: env.vapidSubject,
   publicKey: env.vapidPublicKey ? "OK" : "MISSING",
@@ -16,5 +16,5 @@ webpush.setVapidDetails(
   env.vapidPrivateKey
 );
 
-// Named export, damit `import { webpush } ...` funktioniert
+// Named export, damit import { webpush } ... funktioniert
 export { webpush };

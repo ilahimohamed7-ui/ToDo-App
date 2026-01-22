@@ -29,7 +29,7 @@ export default function Profile() {
     setUsername(storedUser.username || "");
   }, [navigate]);
 
-  // ✅ Username in DB speichern
+  //  Username in DB speichern
   const handleSaveUsername = async () => {
     const name = username.trim();
     if (!name) return alert("Bitte einen Benutzernamen eingeben.");
@@ -52,7 +52,7 @@ export default function Profile() {
     }
   };
 
-  // ✅ Passwort in DB ändern (hashed)
+  //  Passwort in DB ändern (hashed)
   const handleChangePassword = async () => {
     const pw = newPassword.trim();
     if (!pw) return alert("Bitte ein neues Passwort eingeben.");
@@ -73,7 +73,7 @@ export default function Profile() {
     }
   };
 
-  // ✅ Logout: Token + User löschen
+  //  Logout: Token + User löschen
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");

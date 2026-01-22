@@ -10,7 +10,9 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { api } from "../lib/api";
-import { clearAuth, getToken } from "../lib/auth";
+import { clearAuth, getToken } from "../lib/auth"; 
+import { SafeAreaView } from "react-native-safe-area-context";
+
 
 type Task = {
   _id: string;
@@ -32,7 +34,7 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
 
-  // optional: Suche
+  // Suche
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
@@ -105,7 +107,7 @@ export default function HomeScreen() {
     router.push(`/todos/${id}`);
   }
 
-  // optional: Suche (wie Web)
+  
   const visibleProjects = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     if (!term) return projects;
@@ -122,7 +124,8 @@ export default function HomeScreen() {
   }
 
   return (
-    <View style={{ flex: 1, padding: 16, gap: 12 }}>
+  <SafeAreaView style={{ flex: 1, paddingHorizontal: 16, paddingTop: 8, gap: 12 }}>
+
       {/* Header */}
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
         <Text style={{ fontSize: 22, fontWeight: "700" }}>Simple ToDo</Text>
@@ -138,7 +141,7 @@ export default function HomeScreen() {
         </Pressable>
       </View>
 
-      {/* Suche (optional) */}
+      {/* Suche ) */}
       <TextInput
         placeholder="Projekt suchen..."
         value={searchTerm}
@@ -213,7 +216,7 @@ export default function HomeScreen() {
                       <Text>Löschen</Text>
                     </Pressable>
 
-                    {/* Optional später: Teilen-Button */}
+                    
                   </View>
                 </Pressable>
               );
@@ -221,6 +224,6 @@ export default function HomeScreen() {
           />
         )}
       </View>
-    </View>
+    </SafeAreaView>
   );
 }

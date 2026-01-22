@@ -1,55 +1,57 @@
-/* Body – Hintergrund und volle Größe */
+
 body {
   margin: 0;
   padding: 0;
   font-family: sans-serif;
   background-color: rgb(146, 151, 135);
   height: 100vh;
-  width: 100vw;
 }
 
-/* Wrapper für alles – zentriert */
+
 .login-wrapper {
-  position: relative;
   width: 100%;
   max-width: 500px;
-  margin: 0 auto;       /* horizontal zentriert */
-  top: 20%;             /* Abstand von oben */
+  margin: 0 auto;
+  padding-top: 80px;  
   display: flex;
   flex-direction: column;
-  gap: 0;               /* keine automatische Lücke */
   align-items: center;
 }
 
-/* Überschrift obere Zeile */
+
 .login-title {
   font-size: 32px;
-  color: #000000;
-  margin: 0 0 5px 0;   /* nur 5px Abstand nach unten */
+  margin: 0;
   text-align: center;
 }
 
-/* Überschrift untere Zeile */
 .login-title-simple {
   font-size: 32px;
-  color: #000000;
-  margin: 0 0 20px 0;  /* 20px Abstand zu den Inputs */
+  margin: 0 0 40px 0;
   text-align: center;
 }
 
-/* Input-Felder */
+
+.login-wrapper form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+
 .input-field {
-  width: 50%;
+  width: 60%;
   padding: 12px;
   font-size: 16px;
   border-radius: 20px;
   border: 1px solid #ccc;
-  margin-bottom: 30px; /* Abstand zwischen Inputs */
+  margin-bottom: 25px;
 }
 
-/* Button */
+
 .login-button {
-  width: 150px;
+  width: 60%;
   padding: 12px;
   font-size: 18px;
   border: none;
@@ -57,13 +59,10 @@ body {
   background-color: #3700ff;
   color: white;
   cursor: pointer;
-  align-self: center;
-  margin: 5px 0;       /* Abstand über und unter Button */
 }
 
 /* Register-Link */
 .register-link {
-  font-size: 14px;
+  margin-top: 15px;
   text-align: center;
-  margin-top: 8px;      /* Abstand zum Button */
 }

@@ -11,7 +11,7 @@ export default function Login() {
   const navigate = useNavigate();
 
   async function handleLogin(e) {
-    e.preventDefault();
+    e.preventDefault(); // verhindert Page Reload (SPA)
     setErr("");
     setLoading(true);
     try {
@@ -20,7 +20,7 @@ export default function Login() {
         password: (password || "").trim(),
       };
       const { data } = await api.post("/auth/login", payload);
-      localStorage.setItem("token", data.token);
+      localStorage.setItem("token", data.token); //speichern
       localStorage.setItem("user", JSON.stringify(data.user));
       navigate("/home");
     } catch (e) {

@@ -34,7 +34,7 @@ export const projectService = {
     return project;
   },
 
-  addTask: async (userId, projectId, taskData) => {
+  addTask: async (userId, projectId, taskData) => {      // Tasks bearbeitet nur wenn der User Owner oder Collaborator ist,  Dann update i Subdocuments und speichere das gesamte Projekt
     const project = await Project.findOne({
       _id: projectId,
       $or: [{ owner: userId }, { collaborators: userId }],

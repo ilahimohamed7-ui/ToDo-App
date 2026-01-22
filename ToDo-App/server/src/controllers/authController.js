@@ -31,7 +31,7 @@ export const authController = {
       const ok = await bcrypt.compare(password, user.passwordHash);
       if (!ok) return res.status(401).json({ error: { message: 'Invalid credentials' }});
 
-      const token = jwt.sign({ _id: user._id, email: user.email }, env.jwtSecret, { expiresIn: TOKEN_TTL });
+      const token = jwt.sign({ _id: user._id, email: user.email }, env.jwtSecret, { expiresIn: TOKEN_TTL }); // tokem signieren 
       res.json({ token, user: { _id: user._id, email: user.email, name: user.name } });
     } catch (e) { next(e); }
   },

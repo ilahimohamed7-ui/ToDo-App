@@ -6,15 +6,15 @@ import { Project } from "../models/Project.js";
 
 const router = Router();
 
-// userId -> [subscriptions]
+// userId --> [subscriptions]
 const subscribers = new Map();
 
 // Set zum Verhindern von doppelten Pushes für dieselbe Aufgabe
 const sentReminders = new Set();
 
-// ------------------------
+
 //  API-Routen
-// ------------------------
+
 
 router.use(auth(true));
 
@@ -40,7 +40,7 @@ router.post("/subscribe", (req, res) => {
     list.push(subscription);
   }
 
-  console.log("✅ Neue Push-Subscription für User:", userId);
+  console.log(" Neue Push-Subscription für User:", userId);
   return res.status(201).json({ ok: true });
 });
 
@@ -49,7 +49,7 @@ router.post("/test", async (req, res) => {
   const userId = req.user._id.toString();
   const subs = subscribers.get(userId) || [];
 
-  console.log(`📨 Sende Test-Push an ${subs.length} Subscriptions von User ${userId}`);
+  console.log(` Sende Test-Push an ${subs.length} Subscriptions von User ${userId}`);
 
   if (subs.length === 0) {
     return res
@@ -74,9 +74,9 @@ router.post("/test", async (req, res) => {
   return res.json({ ok: true });
 });
 
-// ------------------------
+
 //  Reminder-Logik (Server)
-// ------------------------
+
 
 // Hilfsfunktion: Push an mehrere User schicken
 async function notifyUsers(userIds, payload) {
@@ -103,7 +103,7 @@ async function checkTaskReminders() {
   const soon = new Date(now.getTime() + 15 * 60 * 1000); // +15 Minuten
 
   try {
-    // Alle Projekte laden (für kleine App okay)
+    // Alle Projekte laden 
     const projects = await Project.find().lean();
 
     for (const project of projects) {
@@ -125,7 +125,7 @@ async function checkTaskReminders() {
           if (!sentReminders.has(key)) {
             sentReminders.add(key);
             console.log(
-              `⏰ Reminder (bald fällig) für Task "${task.title}" in Projekt ${project._id}`
+              ` Reminder (bald fällig) für Task "${task.title}" in Projekt ${project._id}`
             );
 
             await notifyUsers(userIds, {
@@ -136,13 +136,13 @@ async function checkTaskReminders() {
           }
         }
 
-        // 2) Erinnerung: jetzt fällig (Zeitpunkt ~ jetzt, +- 60 Sek)
+        // 2) Erinnerung: jetzt fällig (Zeitpunkt  jetzt, +- 60 Sek)
         if (diff <= 0 && diff > -60 * 1000) {
           const key = `due-${task._id}`;
           if (!sentReminders.has(key)) {
             sentReminders.add(key);
             console.log(
-              `⚠️ Reminder (jetzt fällig) für Task "${task.title}" in Projekt ${project._id}`
+              ` Reminder (jetzt fällig) für Task "${task.title}" in Projekt ${project._id}`
             );
 
             await notifyUsers(userIds, {

@@ -90,7 +90,7 @@ export const projectController = {
         }
       );
 
-      emitProjectUpdate(req, project); // neue Task -> alle sehen es
+      emitProjectUpdate(req, project); // neue Task --> alle sehen es
       res.json({ project });
     } catch (e) {
       next(e);
@@ -123,7 +123,7 @@ export const projectController = {
         taskId
       );
 
-      emitProjectUpdate(req, project); // Task gelöscht -> alle sehen es
+      emitProjectUpdate(req, project); // Task gelöscht --> alle sehen es
       res.json({ project });
     } catch (e) {
       next(e);

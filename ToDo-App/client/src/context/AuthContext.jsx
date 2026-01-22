@@ -25,7 +25,7 @@ export default function AuthProvider({ children }) {
     const token = localStorage.getItem("token");
     if (token) fetchMe();
     else setReady(true);
-  }, []);
+  }, []); //Auth-Check nur einmal nicht bei jedem rendern
 
   async function register({ email, password, name }) {
     const { data } = await api.post("/auth/register", {
